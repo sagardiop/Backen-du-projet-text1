@@ -9,29 +9,33 @@ RUN apt-get update && apt-get install -y \
     unzip \
     zip \
     curl \
-    && docker-php-ext-install pdo_pgsql mbstring bcmath
+    pkg-config \
+    autoconf \
+    && docker-php-ext-install pdo_pgsql mbstring bcmath \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Installer Composer
+# Installer Composer depuis l'image officielle
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Définir le répertoire de travail dans le container
 WORKDIR /var/www/html
 
-# Copier tout le projet Laravel dans le container
-COPY . .
+# Copier uniquement les fichiers Composer pour tirer parti du cache Docker
+COPY composer.json composer.lock ./
 
 # Installer les dépendances Laravel
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --no-dev --optimize-autoloader --prefer-dist
+
+# Copier le reste du projet
+COPY . .
 
 # Donner les droits nécessaires pour storage et bootstrap/cache
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Exposer le port attendu par Render
 EXPOSE 10000
-
-# Définir le port attendu par Render
 ENV PORT=10000
 
-# Lancer Laravel
+# Lancer Laravel (pour dev/test, pas production)
 CMD php artisan serve --host 0.0.0.0 --port $PORT

@@ -20,16 +20,13 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Définir le répertoire de travail dans le container
 WORKDIR /var/www/html
 
-# Copier uniquement les fichiers Composer pour tirer parti du cache Docker
-COPY composer.json composer.lock ./
-
-# Installer les dépendances Laravel
-RUN composer install --no-dev --optimize-autoloader --prefer-dist
-
-# Copier le reste du projet
+# 🔹 Copier tout le projet AVANT d'installer les dépendances
 COPY . .
 
-# Donner les droits nécessaires pour storage et bootstrap/cache
+# 🔹 Installer les dépendances Laravel
+RUN composer install --no-dev --optimize-autoloader --prefer-dist
+
+# 🔹 Donner les bons droits
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
@@ -37,5 +34,5 @@ RUN chown -R www-data:www-data /var/www/html \
 EXPOSE 10000
 ENV PORT=10000
 
-# Lancer Laravel (pour dev/test, pas production)
-CMD php artisan serve --host 0.0.0.0 --port $PORT
+# Lancer Laravel
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=${PORT}"]

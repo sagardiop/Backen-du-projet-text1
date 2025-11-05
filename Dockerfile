@@ -17,16 +17,19 @@ RUN apt-get update && apt-get install -y \
 # Installer Composer depuis l'image officielle
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Définir le répertoire de travail dans le container
+# Définir le répertoire de travail
 WORKDIR /var/www/html
 
-# 🔹 Copier tout le projet AVANT d'installer les dépendances
+# Copier uniquement les fichiers de dépendances
+COPY composer.json composer.lock ./
+
+# Installer les dépendances Laravel
+RUN composer install --no-dev --optimize-autoloader --prefer-dist --no-interaction
+
+# Copier le reste du projet
 COPY . .
 
-# 🔹 Installer les dépendances Laravel
-RUN composer install --no-dev --optimize-autoloader --prefer-dist
-
-# 🔹 Donner les bons droits
+# Donner les bons droits
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 

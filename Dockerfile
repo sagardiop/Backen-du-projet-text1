@@ -51,3 +51,7 @@ RUN php artisan storage:link || true
 RUN chmod 600 storage/oauth-private.key || true && \
     chmod 600 storage/oauth-public.key || true && \
     chown www-data:www-data storage/oauth-*.key || true
+
+# 🆕 Étape 15 : Exposer le port HTTP et démarrer le serveur Laravel
+EXPOSE 8080
+CMD php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
